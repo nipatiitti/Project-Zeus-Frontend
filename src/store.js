@@ -12,13 +12,15 @@ import { routerMiddleware } from 'connected-react-router'
 import axios from 'axios'
 import axiosMiddleware from 'redux-axios-middleware'
 
+import INFO from 'constants'
+
 import { rootReducer, history } from 'reducers'
 import { PERSIST_KEY } from 'constants'
 
 // Create client alias
 // Used in action creators
 const client = axios.create({
-    baseURL: 'https://discordapp.com/api/v6',
+    baseURL: INFO.baseUrl,
     responseType: 'json'
 })
 

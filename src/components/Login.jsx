@@ -18,7 +18,7 @@ class Login extends Component {
         if (INFO) {
             window.location = `https://discordapp.com/api/oauth2/authorize?response_type=code&client_id=${
                 INFO.id
-            }&scope=identify%20guilds&redirect_uri=${encodeURI(INFO.url)}`
+            }&scope=identify&redirect_uri=${encodeURI(INFO.url)}`
         }
     }
 

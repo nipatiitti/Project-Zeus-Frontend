@@ -7,11 +7,11 @@ import React, { Component, Fragment } from 'react'
 import { connect } from 'react-redux'
 import { Helmet } from 'react-helmet'
 
-import INFO from 'constants'
-
 import { changeAccess } from 'actions/bot'
 
 import { Button, Search, Checkbox, Loading } from '../Utils'
+import { getChannels, logout, getLoggedIn } from 'actions/discord'
+import { LOGOUT_SUCCESS } from 'actions/types'
 
 class Main extends Component {
     constructor(props) {
@@ -25,6 +25,8 @@ class Main extends Component {
     }
 
     componentDidMount = () => {
+        this.props.dispatch(getChannels())
+        this.props.dispatch(getLoggedIn())
         this.flatten(this.props.channels)
     }
 
@@ -38,7 +40,18 @@ class Main extends Component {
 
         for (let i = 0; i < channels.length; i++) {
             let channel = channels[i]
+            const permission_overwrites = channel.permission_overwrites
+
             channel.access = false
+
+            for (let j = 0; j < permission_overwrites.length; j++) {
+                const overwrite = permission_overwrites[j]
+                if (overwrite.type === 'member' && overwrite.id === this.props.user) {
+                    if ((overwrite.deny & (1 << 10)) == 0) {
+                        channel.access = true
+                    }
+                }
+            }
 
             if (channel.type === 4) {
                 // Categorys
@@ -51,36 +64,17 @@ class Main extends Component {
                     }
                 }
             } else if (channel.type === 0) {
-                const permission_overwrites = channel.permission_overwrites
-                let blockedChannel = false
-
-                for (let j = 0; j < permission_overwrites.length; j++) {
-                    const overwrite = permission_overwrites[j]
-                    if (overwrite.type === 'role' && overwrite.id === INFO.removeRole) {
-                        blockedChannel = true
-                        break
-                    } else if (overwrite.type === 'member' && overwrite.id === this.props.user.id) {
-                        if ((overwrite.deny & (1 << 10)) == 0) {
-                            channel.access = true
-                        }
-                    }
-                }
-
-                if (blockedChannel) {
-                    continue
-                } else {
-                    if (channel.parent_id) {
-                        if (categorys[channel.parent_id]) {
-                            categorys[channel.parent_id].channels.push({ ...channel })
-                        } else {
-                            categorys[channel.parent_id] = {
-                                channels: [{ ...channel }],
-                                name: ''
-                            }
-                        }
+                if (channel.parent_id) {
+                    if (categorys[channel.parent_id]) {
+                        categorys[channel.parent_id].channels.push({ ...channel })
                     } else {
-                        categorys.rogue.channels.push({ ...channel })
+                        categorys[channel.parent_id] = {
+                            channels: [{ ...channel }],
+                            name: ''
+                        }
                     }
+                } else {
+                    categorys.rogue.channels.push({ ...channel })
                 }
             }
         }
@@ -109,6 +103,13 @@ class Main extends Component {
             await this.props.dispatch(changeAccess(id, checked))
             this.changeAccessLocal(categoryId, id, checked)
         } catch (e) {
+            if (
+                e.response &&
+                e.response.data &&
+                e.response.data.message == 'Invalid access token'
+            ) {
+                this.props.dispatch({ type: LOGOUT_SUCCESS })
+            }
             console.error(e)
         }
     }
@@ -154,6 +155,16 @@ class Main extends Component {
         <Fragment>
             <Helmet title="Zeus" />
             <div className="home-container">
+                <div className="ticker-wrap">
+                    <div className="ticker">
+                        {this.props.loggedIn.map(user => (
+                            <span className="ticker-item" key={user}>
+                                {user}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="nav">
                     <Search value={this.state.search} onChange={this.handleChange('search')} />
                 </div>
@@ -165,9 +176,7 @@ class Main extends Component {
                         <div className="home-categorys">{this.renderCategorys()}</div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <Button onClick={() => this.props.dispatch({ type: 'LOGOUT' })}>
-                            Kirjaudu ulos
-                        </Button>
+                        <Button onClick={() => this.props.dispatch(logout())}>Kirjaudu ulos</Button>
                     </div>
                 </div>
             </div>
@@ -177,7 +186,8 @@ class Main extends Component {
 
 const mapStateToProps = state => ({
     channels: state.main.channels,
-    user: state.main.user
+    user: state.main.userId,
+    loggedIn: state.main.loggedIn
 })
 
 export default connect(mapStateToProps)(Main)

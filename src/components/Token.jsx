@@ -6,8 +6,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { getToken, getUser, getChannels } from 'actions/discord'
-import { CODE_SUCCESS } from 'actions/types'
+import { getChannels, saveToken } from 'actions/discord'
 
 import { Loading } from './Utils'
 
@@ -17,15 +16,12 @@ class Token extends Component {
     }
 
     componentDidMount = async () => {
-        const code = this.props.location.search.split('=')[1]
-        this.props.dispatch({
-            type: CODE_SUCCESS,
-            code
-        })
+        const { access_token, user_id } = this.props.match.params
+
+        this.props.dispatch(saveToken(access_token, user_id))
 
         try {
-            await this.props.dispatch(getToken())
-            await Promise.all([this.props.dispatch(getUser()), this.props.dispatch(getChannels())])
+            await this.props.dispatch(getChannels())
             this.props.history.replace('/')
         } catch (e) {
             console.error(e)

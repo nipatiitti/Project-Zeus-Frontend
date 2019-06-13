@@ -23,7 +23,7 @@ class App extends Component {
                 <Helmet titleTemplate="%s | ICT ZEUS" title="Login" defaultTitle="Zeus" />
                 <Router>
                     <Switch>
-                        <Route path="/token" exact component={Token} />
+                        <Route path="/token/:access_token/:user_id" exact component={Token} />
                         <Route path="/login" exact component={Login} />
                         <ProtectedRoute path="/" exact component={Main} />
                         <Route
