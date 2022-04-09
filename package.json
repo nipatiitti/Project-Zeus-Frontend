@@ -73,7 +73,7 @@
         "cross-env": "^5.2.0",
         "dotenv-webpack": "^1.6.0",
         "history": "^4.7.2",
-        "moment": "^2.24.0",
+        "moment": "^2.29.2",
         "prop-types": "^15.6.2",
         "react": "^16.8.4",
         "react-dom": "^16.8.4",
